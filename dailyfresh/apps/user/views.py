@@ -3,9 +3,10 @@ from django.core.urlresolvers import reverse
 from django.views.generic import View
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired
-from django.conf import setting
+from django.conf import settings
 from django.http import HttpResponse
 from user.models import User
+from celery_tasks.tasks import send_register_email
 
 
 # Create your views here.
@@ -41,18 +42,19 @@ class RegisterView(View):
         user.save()
 
         # 发送激活邮件
-        serializer = Serializer(setting.SECRET_KEY, 3600)
+        serializer = Serializer(settings.SECRET_KEY, 3600)
         info = {'confirm': user.id}
-        token = serializer.dumps(info)
+        token = serializer.dumps(info).decode()
+        send_register_email.delay(email, username, token)
 
         # 返回应答，跳转到首页
         return redirect(reverse('goods:index'))
 
 
-class AvtiveView(View):
+class ActiveView(View):
     '''进行用户激活'''
     def get(self, request, token):
-        serializer = Serializer(setting.SECRET_KEY, 3600)
+        serializer = Serializer(settings.SECRET_KEY, 3600)
         try:
             info = serializer.loads(token)
             user_id = info['confirm']
