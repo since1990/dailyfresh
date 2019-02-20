@@ -108,3 +108,21 @@ class LoginView(View):
                 return render(request, 'login.html', {'errmsg': '用户未激活'})
         else:
             return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
+
+
+class UserInfoView(View):
+    '''用户中心-信息页'''
+    def get(self, request):
+        return render(request, 'user_center_info.html')
+
+
+class UserOrderView(View):
+    '''用户中心-订单页'''
+    def get(self, request):
+        return render(request, 'user_center_order.html')
+
+
+class AddressView(View):
+    '''用户中心-地址页'''
+    def get(self, request):
+        return render(request, 'user_center_site.html')
