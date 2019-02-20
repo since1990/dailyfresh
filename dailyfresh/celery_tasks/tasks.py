@@ -1,7 +1,6 @@
 from celery import Celery
 from django.conf import settings
 from django.core.mail import send_mail
-import time
 # 在任务处理端加上以下代码
 import os
 import django
