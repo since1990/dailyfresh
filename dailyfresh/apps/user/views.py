@@ -6,9 +6,11 @@ from itsdangerous import SignatureExpired
 from django.conf import settings
 from django.http import HttpResponse
 from user.models import User, Address
+from goods.models import GoodsSKU
 from celery_tasks.tasks import send_register_email  # 分布式发送激活邮件
 from django.contrib.auth import authenticate, login, logout  # 用户的认证
 from utils.mixin import LoginRequiredMixin
+from django_redis import get_redis_connection
 import re
 
 
@@ -128,7 +130,21 @@ class UserInfoView(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         address = Address.objects.get_default_address(user)
-        return render(request, 'user_center_info.html', {'page': 'user', 'address': address})
+        # 获取用户的历史浏览记录
+        conn = get_redis_connection('default')
+        history_key = 'history_%d' % user.id
+        # 用户的前五个浏览记录
+        sku_ids = conn.lrange(history_key, 0, 4)
+        goods_li = []
+        for id in sku_ids:
+            goods = GoodsSKU.objects.get(id=id)
+            goods_li.append(goods)
+        # 组织上下文
+        content = {'page': 'user',
+                   'address': address,
+                   'goods_li': goods_li}
+
+        return render(request, 'user_center_info.html', content)
 
 
 class UserOrderView(LoginRequiredMixin, View):
