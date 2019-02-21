@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from user.models import User
 from celery_tasks.tasks import send_register_email  # 分布式发送激活邮件
 from django.contrib.auth import authenticate, login, logout  # 用户的认证
+from utils.mixin import LoginRequiredMixin
 
 
 # Create your views here.
@@ -94,8 +95,11 @@ class LoginView(View):
                 # 用户已激活
                 # 记录用户的登陆状态
                 login(request, user)
+                # 获取要跳转的url
+                next_url = request.GET.get('next', reverse('goods:index'))  # 设置默认值-跳转到首页
+
+                response = redirect(next_url)
                 # 判断是否需要记住用户名
-                response = redirect(reverse('goods:index'))
                 rem = request.POST.get('remember')
                 if rem == 'on':
                     # 记住用户名
@@ -110,19 +114,19 @@ class LoginView(View):
             return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
 
 
-class UserInfoView(View):
+class UserInfoView(LoginRequiredMixin, View):
     '''用户中心-信息页'''
     def get(self, request):
         return render(request, 'user_center_info.html', {'page': 'user'})
 
 
-class UserOrderView(View):
+class UserOrderView(LoginRequiredMixin, View):
     '''用户中心-订单页'''
     def get(self, request):
         return render(request, 'user_center_order.html', {'page': 'order'})
 
 
-class AddressView(View):
+class AddressView(LoginRequiredMixin, View):
     '''用户中心-地址页'''
     def get(self, request):
         return render(request, 'user_center_site.html', {'page': 'address'})
