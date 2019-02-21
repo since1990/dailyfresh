@@ -5,10 +5,11 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired
 from django.conf import settings
 from django.http import HttpResponse
-from user.models import User
+from user.models import User, Address
 from celery_tasks.tasks import send_register_email  # 分布式发送激活邮件
 from django.contrib.auth import authenticate, login, logout  # 用户的认证
 from utils.mixin import LoginRequiredMixin
+import re
 
 
 # Create your views here.
@@ -114,19 +115,65 @@ class LoginView(View):
             return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
 
 
+class LogoutView(View):
+    '''退出登陆'''
+    def get(self, request):
+        logout(request)
+        # 跳转到首页
+        return redirect(reverse('goods:index'))
+
+
 class UserInfoView(LoginRequiredMixin, View):
     '''用户中心-信息页'''
     def get(self, request):
-        return render(request, 'user_center_info.html', {'page': 'user'})
+        user = request.user
+        address = Address.objects.get_default_address(user)
+        return render(request, 'user_center_info.html', {'page': 'user', 'address': address})
 
 
 class UserOrderView(LoginRequiredMixin, View):
     '''用户中心-订单页'''
     def get(self, request):
+        user = request.user
         return render(request, 'user_center_order.html', {'page': 'order'})
 
 
 class AddressView(LoginRequiredMixin, View):
     '''用户中心-地址页'''
     def get(self, request):
-        return render(request, 'user_center_site.html', {'page': 'address'})
+        user = request.user  # 获取登陆用户对应的user对象
+        # 获取用户的默认收货地址
+        address = Address.objects.get_default_address(user)
+        return render(request, 'user_center_site.html', {'page': 'address', 'address': address})
+
+    def post(self, request):
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
+
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'errmsg': '数据不完整'})
+
+        # 校验手机号
+        if not re.match(r'^1[3|4|5|7|8][0-9]{9}$', phone):
+            return render(request, 'user_center_site.html', {'errmsg': '手机号格式不正确'})
+
+        user = request.user  # 获取登陆用户对应的user对象
+        # 获取用户的默认收货地址
+        address = Address.objects.get_default_address(user)
+
+        if address:
+            is_default = False
+        else:
+            is_default = True
+
+        # 添加地址信息
+        Address.objects.create(user=user,
+                               receiver=receiver,
+                               addr=addr,
+                               phone=phone,
+                               zip_code=zip_code,
+                               is_default=is_default)
+        # 返回应答，刷新页面
+        return redirect(reverse('user:address'))
