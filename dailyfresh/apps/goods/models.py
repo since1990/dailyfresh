@@ -48,6 +48,9 @@ class Goods(BaseModel):
     # 富文本类型:带有格式的文本
     detail = HTMLField(blank=True, verbose_name='商品详情')
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         db_table = 'df_goods'
         verbose_name = '商品SPU'
@@ -101,6 +104,9 @@ class IndexPromotionBanner(BaseModel):
     url = models.CharField(max_length=256, verbose_name='活动链接')
     image = models.ImageField(upload_to='banner', verbose_name='活动图片')
     index = models.SmallIntegerField(default=0, verbose_name='展示顺序')
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         db_table = 'df_index_promotion'
