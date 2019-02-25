@@ -45,3 +45,9 @@ class IndexView(View):
 
         # 使用模板
         return render(request, 'index.html', context)
+
+
+class DetailView(View):
+    '''详情页'''
+    def get(self, request, goods_id):
+        return render(request, 'detail.html')
