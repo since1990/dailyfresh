@@ -71,6 +71,8 @@ class DetailView(View):
         sku_orders = OrderGoods.objects.filter(sku=sku).exclude(comment='')
         # 获取新品信息
         new_skus = GoodsSKU.objects.filter(type=sku.type).order_by('-create_time')[:2]
+        # 获取同一个SPU的其他规格商品
+        same_spu_skus = GoodsSKU.objects.filter(goods=sku.goods).exclude(id=goods_id)
         # 获取用户购物车中商品的数目
         user = request.user
         cart_count = 0
@@ -93,6 +95,7 @@ class DetailView(View):
         context = {'sku': sku, 'types': types,
                    'sku_orders': sku_orders,
                    'new_skus': new_skus,
+                   'same_spu_skus': same_spu_skus,
                    'cart_count': cart_count}
 
         return render(request, 'detail.html', context)
