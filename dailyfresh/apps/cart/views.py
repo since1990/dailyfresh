@@ -15,8 +15,8 @@ from utils.mixin import LoginRequiredMixin
 class CartAddView(View):
     '''购物车记录添加'''
     def post(self, request):
-        user = request.user
         # 判断用户是否登陆
+        user = request.user
         if not user.is_authenticated():
             return JsonResponse({'res': 0, 'errmsg': '请先登陆'})
 
@@ -106,3 +106,51 @@ class CartInfoView(LoginRequiredMixin, View):
                    'skus': skus}
 
         return render(request, 'cart.html', context)
+
+
+class CartUpdateView(View):
+    '''购物车记录更新'''
+    def post(self, request):
+        # 判断用户是否登陆
+        user = request.user
+        if not user.is_authenticated():
+            return JsonResponse({'res': 0, 'errmsg': '请先登陆'})
+
+        # 接收数据
+        sku_id = request.POST.get('sku_id')
+        count = request.POST.get('count')
+
+        # 校验数据
+        if not all([sku_id, count]):
+            return JsonResponse({'res': 1, 'errmsg': '数据不完整'})
+        # 校验添加的商品数量
+        try:
+            count = int(count)
+        except Exception as e:
+            # 数目出错
+            return JsonResponse({'res': 2, 'errmsg': '商品数目出错'})
+        # 校验商品是否存在
+        try:
+            sku = GoodsSKU.objects.get(id=sku_id)
+        except GoodsSKU.DoesNotExist:
+            # 商品不存在
+            return JsonResponse({'res': 3, 'errmsg': '商品不存在'})
+        # 校验商品的库存
+        if count > sku.stock:
+            return JsonResponse({'res': 4, 'errmsg': '商品库存不足'})
+
+        # 更新购物车记录
+        conn = get_redis_connection('default')
+        cart_key = 'cart_%d' % user.id
+        conn.hset(cart_key, sku_id, count)
+
+        # 计算购物车中商品的总件数
+        total_count = 0
+        vals = conn.hvals(cart_key)
+        for val in vals:
+            total_count += int(val)
+
+        # 返回应答
+        return JsonResponse({'res': 5, 'total_count': total_count,'message': '更新成功'})
+
+
