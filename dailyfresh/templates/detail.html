@@ -122,6 +122,19 @@
             $('.num_show').val(count);
             update_goods_amount();
         });
+        // 手动输入
+        $('.num_show').blur(function () {
+            // 获取用户输入的数目
+            var count = $(this).val();
+            // 校验count是否合法
+            if (isNaN(count) || count.trim().length==0 || parseInt(count) <=0){
+                count = 1
+            }
+            // 重新设置商品的数目
+            $(this).val(parseInt(count));
+            // 更新商品的总价
+            update_goods_amount();
+        });
 
 		var $add_x = $('#add_cart').offset().top;
 		var $add_y = $('#add_cart').offset().left;
