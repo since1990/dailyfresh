@@ -1,4 +1,5 @@
 {% extends 'base_detail_list.html' %}
+{% load staticfiles %}
 {% block title %}天天生鲜-商品详情{% endblock title %}
 {% block main_content %}
 	<div class="breadcrumb">
@@ -89,8 +90,39 @@
 {% endblock bottom %}
 
 {% block bottomfiles %}
-	<script type="text/javascript" src="js/jquery-1.12.2.js"></script>
+	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
+        update_goods_amount();
+        // 计算商品的总价格
+        function update_goods_amount() {
+            // 获取商品的单价和数量
+            var price = $('.show_pirze').children('em').text();
+            var count = $('.num_show').val();
+            price = parseFloat(price);
+            count = parseInt(count);
+            // 计算商品的总价
+            var amount = price*count;
+            // 设置商品的总价
+            $('.total').children('em').text(amount.toFixed(2)+'元')
+        }
+
+        // 增加减少控件
+        $('.add').click(function () {
+            var count = $('.num_show').val();
+            count = parseInt(count)+1;
+            $('.num_show').val(count);
+            update_goods_amount();
+        });
+        $('.minus').click(function () {
+            var count = $('.num_show').val();
+            count = parseInt(count)-1;
+            if (count <= 1){
+                count = 1
+            }
+            $('.num_show').val(count);
+            update_goods_amount();
+        });
+
 		var $add_x = $('#add_cart').offset().top;
 		var $add_y = $('#add_cart').offset().left;
 
