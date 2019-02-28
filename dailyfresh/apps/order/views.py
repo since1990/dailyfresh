@@ -45,25 +45,25 @@ class OrderPlaceView(LoginRequiredMixin, View):
             total_count += int(count)
             total_price += amount
 
-            # 运费:实际开发的时候，属于一个子系统
-            transit_price = 10  # 写死
+        # 运费:实际开发的时候，属于一个子系统
+        transit_price = 10  # 写死
 
-            # 实付款
-            total_pay = total_price + transit_price
+        # 实付款
+        total_pay = total_price + transit_price
 
-            # 获取用户的收件地址
-            addrs = Address.objects.filter(user=user)
+        # 获取用户的收件地址
+        addrs = Address.objects.filter(user=user)
 
-            # 组织上下文
-            context = {'skus': skus,
-                       'total_count': total_count,
-                       'total_price': total_price,
-                       'transit_price': transit_price,
-                       'total_pay': total_pay,
-                       'addrs': addrs}
+        # 组织上下文
+        context = {'skus': skus,
+                   'total_count': total_count,
+                   'total_price': total_price,
+                   'transit_price': transit_price,
+                   'total_pay': total_pay,
+                   'addrs': addrs}
 
-            # 使用模板
-            return render(request, 'place_order.html', context)
+        # 使用模板
+        return render(request, 'place_order.html', context)
 
 
 

@@ -7,8 +7,8 @@
 	<div class="common_list_con clearfix">
 		<dl>
 			<dt>寄送到：</dt>
-            {% for attr in attrs %}
-			<dd><input type="radio" name="" checked="">{{ addr.addr }} （{{ addr.receiver }} 收） {{ addr.phone }}</dd>
+            {% for addr in addrs %}
+			<dd><input type="radio" name="addr_id" value="{{ addr.id }}" {% if addr.is_default %}checked{% endif %}>{{ addr.addr }} （{{ addr.receiver }} 收） {{ addr.phone }}</dd>
             {% endfor %}
 		</dl>
 		<a href="{% url 'user:address' %}" class="edit_site">编辑收货地址</a>
@@ -40,15 +40,15 @@
 			<li class="col05">小计</li>		
 		</ul>
         {% for sku in skus %}
-		<ul class="goods_list_td clearfix">
-			<li class="col01">{{ forloop.counter }}</li>
-			<li class="col02"><img src="{{ sku.image.url }}"></li>
-			<li class="col03">{{ sku.name }}</li>
-			<li class="col04">{{ sku.unite }}</li>
-			<li class="col05">{{ sku.price }}元</li>
-			<li class="col06">{{ sku.count }}</li>
-			<li class="col07">{{ sku.amount }}元</li>
-		</ul>
+            <ul class="goods_list_td clearfix">
+                <li class="col01">{{ forloop.counter }}</li>
+                <li class="col02"><img src="{{ sku.image.url }}"></li>
+                <li class="col03">{{ sku.name }}</li>
+                <li class="col04">{{ sku.unite }}</li>
+                <li class="col05">{{ sku.price }}元</li>
+                <li class="col06">{{ sku.count }}</li>
+                <li class="col07">{{ sku.amount }}元</li>
+            </ul>
         {% endfor %}
 	</div>
 
