@@ -13,7 +13,7 @@ from goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, Inde
 
 
 # 创建一个celery实例对象
-app = Celery('celery_tasks.tasks', broker='redis://192.168.80.130:6379/10')
+app = Celery('celery_tasks.tasks', broker='redis://192.168.80.132:6379/10')
 
 # 定义任务函数
 @app.task  # 调用实例对象的task函数进行装饰
