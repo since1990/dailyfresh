@@ -130,43 +130,66 @@ class OrderCommitView(View):
             cart_key = 'cart_%d' % user.id
             sku_ids = sku_ids.split(',')
             for sku_id in sku_ids:
-                # 获取商品信息
-                try:
-                    sku = GoodsSKU.objects.get(id=sku_id)
-                    # 加锁-悲观锁概念，防止订单页面的高并发
-                    # sku = GoodsSKU.objects.select_for_update().get(id=sku_id)
-                except GoodsSKU.DoesNotExist:
-                    # 商品不存在
-                    # 事务的回滚
-                    transaction.savepoint_rollback(save_id)
-                    return JsonResponse({'res': 4, 'errmsg': '商品不存在'})
+                # 预防高并发时商品库存导致订单失败
+                # 使用乐观锁概念，查询时不加锁，提交事务时再次查询商品的库存是否与提交订单时的库存一致
+                for i in range(3):
+                    # 获取商品信息
+                    try:
+                        sku = GoodsSKU.objects.get(id=sku_id)
+                        # 加锁-悲观锁概念，查询商品时加锁，预防同时有别的数据库操作
+                        # sku = GoodsSKU.objects.select_for_update().get(id=sku_id)
+                    except GoodsSKU.DoesNotExist:
+                        # 商品不存在
+                        # 事务的回滚
+                        transaction.savepoint_rollback(save_id)
+                        return JsonResponse({'res': 4, 'errmsg': '商品不存在'})
 
-                print('user_id:%d stock:%d' % (user.id, sku.stock))
+                    # 从redis中获取用户所要购买的商品的数量
+                    count = conn.hget(cart_key, sku_id)
 
-                # 从redis中获取用户所要购买的商品的数量
-                count = conn.hget(cart_key, sku_id)
+                    # todo: 判断商品库存
+                    if int(count) > sku.stock:
+                        # 库存不足，事务回滚
+                        transaction.savepoint_rollback(save_id)
+                        return JsonResponse({'res': 6, 'errmsg': '商品库存不足'})
 
-                # todo: 判断商品库存
-                if int(count) > sku.stock:
-                    # 库存不足，事务回滚
-                    transaction.savepoint_rollback(save_id)
-                    return JsonResponse({'res': 6, 'errmsg': '商品库存不足'})
+                    # todo: 更新商品的库存和销量
+                    # sku.stock -= int(count)
+                    # sku.sales += int(count)
+                    # sku.save()
+                    origin_stock = sku.stock
+                    new_stock = origin_stock - int(count)
+                    new_sales = sku.sales + int(count)
 
-                # todo: 向df_order_goods表中添加一条记录
-                OrderGoods.objects.create(order=order,
-                                          sku=sku,
-                                          count=count,
-                                          price=sku.price)
+                    print('user:%d times:%d stock:%d' % (user.id, i, sku.stock))
+                    import time
+                    time.sleep(10)
 
-                # todo: 更新商品的库存和销量
-                sku.stock -= int(count)
-                sku.sales += int(count)
-                sku.save()
+                    # update df_goods_sku set stock=new_stock, sales=new_sales
+                    # where id=sku_id and stock = orgin_stock
+                    res = GoodsSKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
+                    # res接收返回的修改的行数，如果为0说明没有数据变动，就是说更新失败，下单失败
+                    if res == 0:
+                        # 再次尝试
+                        if i == 2:
+                            # 第三次尝试
+                            transaction.savepoint_rollback(save_id)
+                            return JsonResponse({'res': 8, 'errmsg': '订单生成失败_2'})
+                        continue
 
-                # todo: 累加计算订单商品的总数量和总价格
-                total_count += int(count)
-                amount = sku.price*int(count)
-                total_price += amount
+                    # todo: 向df_order_goods表中添加一条记录
+                    OrderGoods.objects.create(order=order,
+                                              sku=sku,
+                                              count=count,
+                                              price=sku.price)
+
+                    # todo: 累加计算订单商品的总数量和总价格
+                    total_count += int(count)
+                    amount = sku.price*int(count)
+                    total_price += amount
+
+                    # 跳出循环
+                    break
 
             # todo: 更新订单信息表中的商品的总数量和总价格
             order.total_count = total_count
