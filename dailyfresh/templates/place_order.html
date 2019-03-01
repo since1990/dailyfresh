@@ -81,29 +81,33 @@
 	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
 		$('#order_btn').click(function() {
-			localStorage.setItem('order_finish',2);
+		    // 获取用户选择的地址id，支付方式id，商品id
+            var addr_id = $('input[name="addr_id"]:checked').val();
+            var pay_method = $('input[name="pay_style"]:checked').val();
+            var sku_ids = $(this).attr('sku_ids');
+            var csrf = $('input[name="csrfmiddlewaretoken"]').val();
+            // 组织参数
+            var params = {'addr_id': addr_id, 'pay_method': pay_method, 'sku_ids': sku_ids,
+                          'csrfmiddlewaretoken': csrf};
+            // 发起ajax请求，访问/order/commit
+            $.post('/order/commit', params, function (data) {
+                // 创建成功
+                if (data.res==5) {
+                    alert('创建成功')
+                }
+                else {
+                    alert(data.errmsg)
+                }
+            });
 
-			$('.popup_con').fadeIn('fast', function() {
-			    // 获取用户选择的地址id，支付方式id，商品id
-                var addr_id = $('input[name="addr_id"]:checked').val();
-                var pay_method = $('input[name="pay_style"]:checked').val();
-                var sku_ids = $(this).attr('sku_ids');
-                var csrf = $('input[name="csrfmiddlewaretoken"]').val();
-                // 组织参数
-                var params = {'addr_id': addr_id, 'pay_method': pay_method, 'sku_ids': sku_ids,
-                              'csrfmiddlewaretoken': csrf};
-                // 发起ajax请求，访问/order/commit
-                $.post('/order/commit', params, function (data) {
-                    //TODO
-                });
-
+{#			localStorage.setItem('order_finish',2);#}
+{#			$('.popup_con').fadeIn('fast', function() {#}
 {#				setTimeout(function(){#}
 {#					$('.popup_con').fadeOut('fast',function(){#}
 {#						window.location.href = 'index.html';#}
 {#					});	#}
 {#				},3000)#}
-				
-			});
+{#			});#}
 		});
 	</script>
 {% endblock bottomfiles %}
