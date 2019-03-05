@@ -78,7 +78,7 @@
             $.post('/order/pay', params, function (data) {
                 if (data.res==3){
                     // 引导用户到支付页面
-                    window.open(data.pay_url)
+                    window.open(data.pay_url);
                     // 访问/order/check页面，获取支付结果并告知用户
                     $.post('/order/check', params, function (data) {
                         if (data.res==3){

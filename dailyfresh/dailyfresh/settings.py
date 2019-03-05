@@ -25,9 +25,9 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 SECRET_KEY = '7qwc(hijp_*+uih__$ucwtdf_56e(q5bjh)@bl0oultf2!4f!7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -115,6 +115,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+# 指定收集静态文件的路径
+STATIC_ROOT='/var/www/dailyfresh/static'
 
 # 富文本编辑器的配置
 TINYMCE_DEFAULT_CONFIG = {
