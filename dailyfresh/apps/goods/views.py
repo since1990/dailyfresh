@@ -129,7 +129,7 @@ class ListView(View):
             skus = GoodsSKU.objects.filter(type=type).order_by('-id')  # 降序
 
         # 对数据进行分页
-        paginator = Paginator(skus, 4)  # 设置每页显示2个
+        paginator = Paginator(skus, 4)  # 设置每页显示4个
 
         # 校验page的合法性
         try:
